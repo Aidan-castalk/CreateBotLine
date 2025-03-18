@@ -14,6 +14,7 @@ import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import utils.DatabaseUtils;
 import utils.ExcelExporter;
+import utils.SQLExporter;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -44,7 +45,7 @@ public class BotTest {
     }
     @DataProvider(name = "runMultipleTimes")
     public Object[][] createTestData() {
-        return new Object[2][0]; // Chạy 10 lần
+        return new Object[1][0]; // Chạy 10 lần
     }
 
     @Test(dataProvider = "runMultipleTimes")
@@ -61,6 +62,7 @@ public class BotTest {
             createBotLine();
             insertBotDataIntoDatabase();
             testExportToExcel();
+            testExportSQL();
 
         } catch (Exception e) {
             System.out.println("⚠ Lỗi xảy ra nhưng test vẫn tiếp tục: " + e.getMessage());
@@ -70,7 +72,7 @@ public class BotTest {
         driver.get("https://manager.line.biz/");
         driver.manage().window().maximize();
         Actions actions = new Actions(driver);
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//a[normalize-space()='Log in with business account']"))).click();
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//input[@placeholder='Email address']"))).sendKeys(email);
         driver.findElement(By.xpath("//input[@placeholder='Password']")).sendKeys(passWord);
@@ -188,9 +190,17 @@ public class BotTest {
         String fileName = "line_bots.xlsx";
         String sheetName = "Line Bots";
         List<String[]> data = new ArrayList<>();
-        data.add(new String[]{"Basic ID", "Channel ID", "Channel Secret", "Access Token", "Email"}); // Header
-        data.add(new String[]{basicId, channelId, channelSecret, accessToken, email});
+        data.add(new String[]{"Basic ID", "Channel ID", "Channel Secret", "Access Token", "Email", "BotName"}); // Header
+        data.add(new String[]{basicId, channelId, channelSecret, accessToken, email, botName});
         ExcelExporter.writeExcel(fileName, sheetName, data);
+    }
+    public void testExportSQL() {
+        String fileName = "insert_bots.sql";
+
+        List<String[]> botData = new ArrayList<>();
+        botData.add(new String[]{email, botName, basicId, channelId, accessToken, channelSecret});
+
+        SQLExporter.writeSQL(fileName, botData);
     }
 
     public void selectByValue(By locator, String value) {
@@ -205,7 +215,7 @@ public class BotTest {
     }
     public static String generateBotName() {
         String randomUUID = UUID.randomUUID().toString().replaceAll("[^0-9]", "").substring(0, 4);
-        return "AidanBot" + randomUUID;
+        return "Rina" + randomUUID;
     }
 
     @AfterClass
