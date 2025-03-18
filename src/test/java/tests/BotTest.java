@@ -68,6 +68,7 @@ public class BotTest {
     }
     public void LoginPage1() {
         driver.get("https://manager.line.biz/");
+        driver.manage().window().maximize();
         Actions actions = new Actions(driver);
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//a[normalize-space()='Log in with business account']"))).click();
