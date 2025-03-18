@@ -1,5 +1,6 @@
 package utils;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
@@ -7,10 +8,15 @@ import java.util.List;
 public class SQLExporter {
 
     public static void writeSQL(String fileName, List<String[]> botData) {
-        try (FileWriter writer = new FileWriter(fileName)) {
+        File file = new File(fileName);
+        boolean fileExists = file.exists();
+        try (FileWriter writer = new FileWriter(file, true)) {
+            if (!fileExists) {
+                writer.write("-- SQL Insert Statements\n");
+            }
+
             for (String[] bot : botData) {
-                String sql = String.format(
-                        "INSERT INTO public.line_integration_bots (line_business_account, bot_name, basic_id, channel_id, share_link, qr_url, access_token, channel_secret, status, created_at, updated_at) VALUES (\n" +
+                String sql = String.format("INSERT INTO public.line_integration_bots (line_business_account, bot_name, basic_id, channel_id, share_link, qr_url, access_token, channel_secret, status, created_at, updated_at) VALUES (\n" +
                                 "    '%s',\n" +
                                 "    '%s',\n" +
                                 "    '%s',\n" +
@@ -23,11 +29,11 @@ public class SQLExporter {
                                 "    now(),\n" +
                                 "    now()\n" +
                                 ");\n\n",
-                        bot[0], bot[1], bot[2], bot[3], bot[2], bot[2], bot[4], bot[5]
-                );
+                        bot[0], bot[1], bot[2], bot[3], bot[4], bot[5]);
                 writer.write(sql);
             }
-            System.out.println("✅ File SQL đã được tạo: " + fileName);
+            writer.flush();
+            System.out.println("✅ Dữ liệu đã được ghi vào " + fileName);
         } catch (IOException e) {
             e.printStackTrace();
         }

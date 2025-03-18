@@ -45,18 +45,33 @@ public class BotTest {
     }
     @DataProvider(name = "runMultipleTimes")
     public Object[][] createTestData() {
-        return new Object[1][0]; // Chạy 10 lần
+        return new Object[2][0]; // Chạy 10 lần
     }
 
     @Test(dataProvider = "runMultipleTimes")
     public void runBotTests() {
         try {
             botName = generateBotName();
-            if (runCount == 0) {
-                LoginPage1();
-                runCount++;
-            } else {
-                driver.get("https://manager.line.biz/");
+            boolean isLoginSuccess = false;
+            int retryCount = 0;
+            int maxRetries = 3;
+            while (!isLoginSuccess && retryCount < maxRetries) {
+                try {
+                    if (runCount == 0) {
+                        LoginPage1();
+                        runCount++;
+                    } else {
+                        driver.get("https://manager.line.biz/");
+                    }
+                    isLoginSuccess = true;
+                } catch (Exception e) {
+                    retryCount++;
+                    System.out.println("⚠ Lỗi khi chạy LoginPage1, thử lại lần " + retryCount + ": " + e.getMessage());
+                    if (retryCount >= maxRetries) {
+                        System.out.println("❌ Đã thử lại " + maxRetries + " lần nhưng vẫn thất bại. Chuyển sang bước tiếp theo.");
+                        break;
+                    }
+                }
             }
             LoginPage();
             createBotLine();
