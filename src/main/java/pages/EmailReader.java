@@ -1,4 +1,4 @@
-package tests;
+package pages;
 
 import jakarta.mail.*;
 import jakarta.mail.search.FlagTerm;
