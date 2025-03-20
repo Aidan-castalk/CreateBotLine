@@ -9,11 +9,11 @@ import java.util.List;
 public class ExcelReader {
     public static List<String> readBotNames(String fileName) {
         List<String> botNames = new ArrayList<>();
-        try (InputStream is = ExcelReader.class.getClassLoader().getResourceAsStream(fileName)) {
+        try (InputStream is = ExcelReader.class.getClassLoader().getResourceAsStream(fileName);
+             Workbook workbook = new XSSFWorkbook(is)) {
             if (is == null) {
                 throw new IllegalArgumentException("File not found: " + fileName);
             }
-            Workbook workbook = new XSSFWorkbook(is);
             Sheet sheet = workbook.getSheetAt(0);
 
             for (Row row : sheet) {

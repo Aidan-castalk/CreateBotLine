@@ -32,7 +32,7 @@ public class BotTest {
     private String accessToken;
     private String channelSecret;
     private static int runCount = 0;
-
+    private boolean loginSuccess;
     @BeforeClass
     public void setup() throws InterruptedException {
         WebDriverManager.chromedriver().setup();
@@ -45,40 +45,59 @@ public class BotTest {
     }
     @DataProvider(name = "runMultipleTimes")
     public Object[][] createTestData() {
-        return new Object[2][0]; // Chạy 10 lần
+        return new Object[2][0]; //chạy bao nhiêu bot thì điền vào đây
     }
 
     @Test(dataProvider = "runMultipleTimes")
+    // public void runBotTests() {
+    //     try {
+    //         botName = generateBotName();
+    //         if (runCount == 0) { 
+    //             LoginPage1();
+    //             runCount++; 
+    //         } else {
+    //             driver.get("https://manager.line.biz/");
+    //         }
+    //         LoginPage();
+    //         createBotLine();
+    //         insertBotDataIntoDatabase();
+    //         testExportToExcel();
+    //         testExportSQL();
+
+    //     } catch (Exception e) {
+    //         System.out.println("⚠ Lỗi xảy ra nhưng test vẫn tiếp tục: " + e.getMessage());
+    //     }
+    // }
+
     public void runBotTests() {
         try {
             botName = generateBotName();
-            boolean isLoginSuccess = false;
-            int retryCount = 0;
-            int maxRetries = 3;
-            while (!isLoginSuccess && retryCount < maxRetries) {
-                try {
-                    if (runCount == 0) {
-                        LoginPage1();
-                        runCount++;
-                    } else {
-                        driver.get("https://manager.line.biz/");
-                    }
-                    isLoginSuccess = true;
-                } catch (Exception e) {
-                    retryCount++;
-                    System.out.println("⚠ Lỗi khi chạy LoginPage1, thử lại lần " + retryCount + ": " + e.getMessage());
-                    if (retryCount >= maxRetries) {
-                        System.out.println("❌ Đã thử lại " + maxRetries + " lần nhưng vẫn thất bại. Chuyển sang bước tiếp theo.");
-                        break;
-                    }
+            String currentUrl = driver.getCurrentUrl();
+    
+            if (currentUrl.contains("https://developers.line.biz/console/")) {
+                System.out.println("🔄 Đã ở trang Console của Line, chỉ chạy từ LoginPage()...");
+                driver.get("https://manager.line.biz/");
+                LoginPage();
+            } else {
+                if (runCount == 0) { 
+                    LoginPage1();
+                    runCount++; 
+                } 
+
+                while (runCount == 1 && !loginSuccess) {
+                    System.out.println("🔄 Đang thử đăng nhập lại...");
+                    LoginPage1();
                 }
+    
+                System.out.println("✅ Truy cập trang chính trước khi tiếp tục đăng nhập...");
+                LoginPage();
             }
-            LoginPage();
+    
             createBotLine();
-            insertBotDataIntoDatabase();
+            //insertBotDataIntoDatabase();
             testExportToExcel();
             testExportSQL();
-
+    
         } catch (Exception e) {
             System.out.println("⚠ Lỗi xảy ra nhưng test vẫn tiếp tục: " + e.getMessage());
         }
@@ -86,12 +105,14 @@ public class BotTest {
     public void LoginPage1() {
         driver.get("https://manager.line.biz/");
         driver.manage().window().maximize();
-        Actions actions = new Actions(driver);
+        //Actions actions = new Actions(driver);
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//a[normalize-space()='Log in with business account']"))).click();
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//input[@placeholder='Email address']"))).sendKeys(email);
         driver.findElement(By.xpath("//input[@placeholder='Password']")).sendKeys(passWord);
         driver.findElement(By.xpath("//button[normalize-space()='Log in']")).click();
+        loginSuccess = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//span[@class='user-name text-truncate text-info']"))).isDisplayed();
+        System.out.println("loginSuccess: " + loginSuccess);
     }
     public void LoginPage() throws InterruptedException {
 //        driver.get("https://manager.line.biz/");
@@ -156,7 +177,7 @@ public class BotTest {
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[text()='OK']"))).click();
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[text()='OK']"))).click();
         Thread.sleep(4000);
-        JavascriptExecutor js = (JavascriptExecutor) driver;
+        //JavascriptExecutor js = (JavascriptExecutor) driver;
         WebElement webhookInput = driver.findElement(By.xpath("//input[@name='webhookEndpoint']"));
         webhookInput.click();
         webhookInput.sendKeys(modifiedUrl);
@@ -180,7 +201,7 @@ public class BotTest {
     //@Test(dependsOnMethods = "LoginPage")
     public void createBotLine() throws InterruptedException {
         driver.get("https://developers.line.biz/console/");
-        Actions actions = new Actions(driver);
+        //Actions actions = new Actions(driver);
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
         String botNameProvider = "//h3[normalize-space()='" + botName + "']";
         WebElement providerElement = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//a[@class='dc-provider-name dc-provider-link dc-provider-link']//span[@class='highlighter'][normalize-space()='" + provider + "']")));
@@ -196,9 +217,9 @@ public class BotTest {
         System.out.println("Token: " + accessToken);
     }
     //@Test(dependsOnMethods = "createBotLine")
-    public void insertBotDataIntoDatabase() {
-        DatabaseUtils.insertBotData(email, botName, basicId, channelId, accessToken, channelSecret);
-    }
+    // public void insertBotDataIntoDatabase() {
+    //     DatabaseUtils.insertBotData(email, botName, basicId, channelId, accessToken, channelSecret);
+    // }
 
     //@Test(dependsOnMethods = "insertBotDataIntoDatabase")
     public void testExportToExcel() {
@@ -237,4 +258,5 @@ public class BotTest {
     public static void teardown() {
         driver.quit();
     }
+    
 }
